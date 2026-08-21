@@ -135,6 +135,41 @@
 
                 <section>
                     <div class="flex items-center mb-6">
+                        <span class="bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-[15px] mr-3 shadow-md">2</span>
+                        <h2 class="text-[22px] md:text-[24px] font-black text-gray-900 tracking-tight">예약자 정보</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
+                        <div>
+                            <label for="camp_name" class="block text-[15px] font-bold text-gray-700 mb-2">캠핑장명</label>
+                            <input type="text" id="camp_name" placeholder="캠핑장 이름 입력" class="form-input w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50 text-gray-900 text-[16px] font-medium">
+                        </div>
+                        <div>
+                            <label for="phone_number" class="block text-[15px] font-bold text-gray-700 mb-2">담당자 연락처</label>
+                            <input type="tel" id="phone_number" maxlength="13" placeholder="010-0000-0000" class="form-input w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50 text-gray-900 text-[16px] font-medium" oninput="window.formatPhoneNumber(this)">
+                        </div>
+                    </div>
+
+                    <!-- Q Point -->
+                    <div class="bg-brand-light p-6 md:p-8 rounded-[24px] border border-brand/20">
+                        <div class="flex justify-between items-end mb-4">
+                            <h3 class="text-[18px] font-black text-gray-900 tracking-tight">Q포인트 적용</h3>
+                            <span class="text-[14px] text-gray-500 font-medium">보유 포인트: <span id="my_qmoney_display" class="font-bold text-gray-900">50,000 P</span></span>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="relative flex-grow">
+                                <input type="number" id="qmoney_input" step="100" min="0" placeholder="0" class="form-input w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-right text-gray-900 pr-12 text-[18px] font-bold shadow-sm" oninput="window.handleQMoneyInput()" onblur="window.handleQMoneyBlur()">
+                                <span class="absolute right-5 top-4 text-gray-400 font-bold text-[16px]">P</span>
+                            </div>
+                            <button class="bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-bold px-6 rounded-2xl transition-colors shadow-md whitespace-nowrap" onclick="window.useAllQMoney()">전액 사용</button>
+                        </div>
+                        <p class="text-[13px] text-gray-400 font-medium mt-3">* 100P 단위로 사용 가능합니다.</p>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <section>
+                    <div class="flex items-center mb-6">
                         <span class="bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-[15px] mr-3 shadow-md">3</span>
                         <h2 class="text-[22px] md:text-[24px] font-black text-gray-900 tracking-tight">결제 수단 및 금액</h2>
                     </div>
