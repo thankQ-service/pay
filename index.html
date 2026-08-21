@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이벤트 예약 결제</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- SheetJS Excel Library -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <!-- 폰트 적용 (제안서와 동일) -->
+    <link rel="stylesheet" as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#ED6F22', 
+                            light: '#FFF8F3', 
+                            dark: '#D95E15'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 제안서와 동일한 텍스트 렌더링 설정 */
+        body { 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
+            background-color: #f5f5f5;
+            word-break: keep-all; 
+            letter-spacing: -0.02em;
+        }
+
+        /* Number spin hide */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        /* Smooth transition for interactive elements */
+        .interactive-card { transition: all 0.2s ease-in-out; }
+        .interactive-card.active {
+            border-color: #ED6F22 !important;
+            background-color: #FFF8F3 !important;
+            box-shadow: 0 0 0 1px #ED6F22, 0 10px 25px rgba(237,111,34,0.1);
+        }
+        
+        .interactive-card:not(.active):hover {
+            border-color: #d1d5db;
+            background-color: #f9fafb;
+        }
+
+        .form-input { transition: all 0.2s ease; }
+        .form-input:focus {
+            border-color: #ED6F22;
+            box-shadow: 0 0 0 3px rgba(237, 111, 34, 0.1);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="text-gray-900 antialiased py-10 md:py-16 min-h-screen flex flex-col items-center px-4">
+
+    <div class="w-full max-w-[800px] flex-grow flex flex-col gap-6">
+        
+        <!-- Main Checkout Container -->
+        <div class="bg-white rounded-[32px] shadow-[0_15px_50px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden relative">
+            
+            <!-- Header -->
+            <div class="px-8 md:px-12 pt-12 pb-8 border-b border-gray-100">
+                <h1 class="text-[32px] md:text-[40px] font-black text-gray-900 tracking-tight leading-tight mb-2">
+                    캠핑장 이벤트 결제
+                </h1>
+                <p class="text-[18px] md:text-[20px] text-gray-500 font-medium">
+                    원하시는 일정 선택 후 기본 정보를 입력해 주세요.
+                </p>
+            </div>
+
+            <div class="p-8 md:p-12 space-y-14">
+                
+                <section>
+                    <div class="flex items-center mb-6">
+                        <span class="bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-[15px] mr-3 shadow-md">1</span>
+                        <h2 class="text-[22px] md:text-[24px] font-black text-gray-900 tracking-tight">행사 일정 선택</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 9월 -->
+                        <button onclick="window.selectDate('09-26')" id="card_09-26" class="interactive-card border-2 border-gray-200 rounded-[24px] p-6 text-left bg-white relative overflow-hidden group">
+                            <div class="text-[14px] font-bold text-gray-400 mb-1 group-[.active]:text-brand">9월 이벤트</div>
+                            <div class="text-[22px] font-black text-gray-900 mb-2">9월 26일 (토)</div>
+                            <div class="text-[16px] font-bold text-gray-600 group-[.active]:text-gray-900">추석 맞이 비누방울쇼</div>
+                        </button>
+
+                        <!-- 10월 -->
+                        <button onclick="window.selectDate('10-31')" id="card_10-31" class="interactive-card border-2 border-gray-200 rounded-[24px] p-6 text-left bg-white relative overflow-hidden group">
+                            <div class="text-[14px] font-bold text-gray-400 mb-1 group-[.active]:text-brand">10월 이벤트</div>
+                            <div class="text-[22px] font-black text-gray-900 mb-2">10월 31일 (토)</div>
+                            <div class="text-[16px] font-bold text-gray-600 group-[.active]:text-gray-900">할로윈 특별 매직쇼</div>
+                        </button>
+
+                        <!-- 11월 -->
+                        <button onclick="window.selectDate('11-28')" id="card_11-28" class="interactive-card border-2 border-gray-200 rounded-[24px] p-6 text-left bg-white relative overflow-hidden group">
+                            <div class="text-[14px] font-bold text-gray-400 mb-1 group-[.active]:text-brand">11월 이벤트</div>
+                            <div class="text-[22px] font-black text-gray-900 mb-2">11월 28일 (토)</div>
+                            <div class="text-[16px] font-bold text-gray-600 group-[.active]:text-gray-900">가을 감성 음악회</div>
+                        </button>
+
+                        <!-- 12월 -->
+                        <button onclick="window.selectDate('12-26')" id="card_12-26" class="interactive-card border-2 border-gray-200 rounded-[24px] p-6 text-left bg-white relative overflow-hidden group">
+                            <div class="text-[14px] font-bold text-gray-400 mb-1 group-[.active]:text-brand">12월 이벤트</div>
+                            <div class="text-[22px] font-black text-gray-900 mb-2">12월 26일 (토)</div>
+                            <div class="text-[16px] font-bold text-gray-600 group-[.active]:text-gray-900">크리스마스 매직쇼</div>
+                        </button>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <section>
+                    <div class="flex items-center mb-6">
+                        <span class="bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-[15px] mr-3 shadow-md">2</span>
+                        <h2 class="text-[22px] md:text-[24px] font-black text-gray-900 tracking-tight">예약자 정보</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
+                        <div>
+                            <label for="camp_name" class="block text-[15px] font-bold text-gray-700 mb-2">캠핑장명</label>
+                            <input type="text" id="camp_name" placeholder="캠핑장 이름 입력" class="form-input w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50 text-gray-900 text-[16px] font-medium">
+                        </div>
+                        <div>
+                            <label for="phone_number" class="block text-[15px] font-bold text-gray-700 mb-2">담당자 연락처</label>
+                            <input type="tel" id="phone_number" placeholder="010-0000-0000" maxlength="13" oninput="window.formatPhoneNumber(this)" class="form-input w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50 text-gray-900 text-[16px] font-medium">
+                        </div>
+                    </div>
+
+                    <!-- Q Point -->
+                    <div class="bg-brand-light p-6 md:p-8 rounded-[24px] border border-brand/20">
+                        <div class="flex justify-between items-end mb-4">
+                            <h3 class="text-[18px] font-black text-gray-900 tracking-tight">Q포인트 적용</h3>
+                            <span class="text-[14px] text-gray-500 font-medium">보유 포인트: <span id="my_qmoney_display" class="font-bold text-gray-900">50,000 P</span></span>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="relative flex-grow">
+                                <input type="number" id="qmoney_input" step="100" min="0" placeholder="0" class="form-input w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-right text-gray-900 pr-12 text-[18px] font-bold shadow-sm" oninput="window.handleQMoneyInput()" onblur="window.handleQMoneyBlur()">
+                                <span class="absolute right-5 top-4 text-gray-400 font-bold text-[16px]">P</span>
+                            </div>
+                            <button class="bg-gray-900 hover:bg-gray-800 text-white text-[15px] font-bold px-6 rounded-2xl transition-colors shadow-md whitespace-nowrap" onclick="window.useAllQMoney()">전액 사용</button>
+                        </div>
+                        <p class="text-[13px] text-gray-400 font-medium mt-3">* 100P 단위로 사용 가능합니다.</p>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <section>
+                    <div class="flex items-center mb-6">
+                        <span class="bg-gray-900 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-[15px] mr-3 shadow-md">3</span>
+                        <h2 class="text-[22px] md:text-[24px] font-black text-gray-900 tracking-tight">결제 수단 및 금액</h2>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="grid grid-cols-2 gap-3 mb-10">
+                        <label class="flex items-center justify-center p-5 border-2 border-gray-200 bg-white rounded-[20px] cursor-pointer hover:border-gray-300 transition-colors [&:has(input:checked)]:border-gray-900 [&:has(input:checked)]:bg-gray-50 text-gray-700 font-bold text-[16px]">
+                            <input type="radio" name="payment_method" value="credit_card" class="hidden" checked>
+                            <i class="far fa-credit-card mr-2 text-gray-400"></i> 신용카드
+                        </label>
+                        <label class="flex items-center justify-center p-5 border-2 border-gray-200 bg-white rounded-[20px] cursor-pointer hover:border-gray-300 transition-colors [&:has(input:checked)]:border-gray-900 [&:has(input:checked)]:bg-gray-50 text-gray-700 font-bold text-[16px]">
+                            <input type="radio" name="payment_method" value="virtual_account" class="hidden">
+                            <i class="fas fa-university mr-2 text-gray-400"></i> 가상계좌
+                        </label>
+                    </div>
+                    
+                    <!-- Total Price Box -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-[24px] p-8 md:p-10 mb-8">
+                        <div class="space-y-4 text-[16px] md:text-[18px] font-medium text-gray-600 border-b border-gray-200 pb-6 mb-6">
+                            <div class="flex justify-between items-center">
+                                <span>선택 이벤트</span>
+                                <span id="selected_summary_text" class="font-bold text-gray-900">9월 26일 (추석 이벤트)</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>이벤트 진행비</span>
+                                <span class="font-bold text-gray-900">1,500,000원</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>부가세 (VAT 10%)</span>
+                                <span class="font-bold text-gray-900">150,000원</span>
+                            </div>
+                            <div id="qmoney_discount_row" class="flex justify-between items-center text-brand hidden pt-2">
+                                <span class="font-bold">Q포인트 적용</span>
+                                <span id="qmoney_discount_text" class="font-black">- 0원</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                            <span class="text-[20px] md:text-[24px] font-black text-gray-900 tracking-tight">총 결제금액</span>
+                            <div class="text-right">
+                                <span class="text-[44px] md:text-[56px] font-black text-brand leading-none tracking-tighter drop-shadow-sm" id="total_price_display">1,650,000</span>
+                                <span class="text-[24px] font-bold text-gray-600 ml-1">원</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Message -->
+                    <div class="bg-[#FFF5EC] border border-brand/20 p-5 rounded-2xl flex items-start gap-3 mb-8 shadow-sm">
+                        <i class="fas fa-info-circle text-brand mt-1 text-[18px]"></i>
+                        <p class="text-[15px] text-gray-800 font-medium leading-relaxed">
+                            결제는 <strong class="text-brand font-black">1시간 이내</strong> 완료해 주셔야 예약이 확정됩니다.<br>
+                            결제 완료 시 담당 플래너가 확인 후 즉시 연락을 드립니다.
+                        </p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button class="w-full bg-brand hover:bg-brand-dark text-white text-[22px] md:text-[26px] font-black py-6 rounded-[24px] transition-all shadow-[0_20px_40px_rgba(237,111,34,0.3)] flex items-center justify-center transform hover:-translate-y-1" onclick="window.processPayment()">
+                        <i class="fas fa-won-sign mr-3 opacity-80"></i> <span id="pay_button_text">1,650,000원 결제하기</span>
+                    </button>
+
+                </section>
+
+            </div>
+        </div>
+
+        <!-- Admin Access -->
+        <div class="text-center mt-4">
+            <button onclick="window.checkAdmin()" class="text-[14px] font-medium text-gray-400 hover:text-gray-600 transition-colors">
+                관리자 페이지 접속
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="custom_alert_modal" class="hidden fixed inset-0 z-[70] bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-[24px] w-full max-w-sm p-8 shadow-2xl text-center transform transition-all">
+            <div id="alert_icon" class="mb-5"></div>
+            <h3 id="alert_title" class="text-[22px] font-black text-gray-900 mb-3 tracking-tight">알림</h3>
+            <p id="alert_message" class="text-[16px] font-medium text-gray-600 mb-8 whitespace-pre-line leading-relaxed break-keep"></p>
+            <button onclick="document.getElementById('custom_alert_modal').classList.add('hidden')" class="w-full bg-gray-900 text-white font-bold text-[18px] py-4 rounded-[16px] hover:bg-gray-800 transition-colors shadow-md">확인</button>
+        </div>
+    </div>
+
+    <!-- Custom Delete Confirm Modal -->
+    <div id="custom_confirm_modal" class="hidden fixed inset-0 z-[80] bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-[24px] w-full max-w-sm p-8 shadow-2xl text-center">
+            <h3 id="confirm_title" class="text-[22px] font-black text-gray-900 mb-3 tracking-tight">삭제 확인</h3>
+            <p id="confirm_message" class="text-[16px] font-medium text-gray-600 mb-8 whitespace-pre-line leading-relaxed break-keep">해당 결제 내역을 정말 삭제하시겠습니까?</p>
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('custom_confirm_modal').classList.add('hidden')" class="flex-1 bg-gray-100 text-gray-600 font-bold text-[16px] py-4 rounded-[16px] hover:bg-gray-200 transition-colors">취소</button>
+                <button onclick="window.executeDelete()" class="flex-1 bg-red-500 text-white font-bold text-[16px] py-4 rounded-[16px] hover:bg-red-600 transition-colors shadow-md shadow-red-500/20">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Password Modal -->
+    <div id="admin_auth_modal" class="hidden fixed inset-0 z-[60] bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-[24px] w-full max-w-sm p-8 shadow-2xl text-center border border-gray-100">
+            <h3 class="text-[20px] font-black text-gray-900 mb-6 tracking-tight">관리자 인증</h3>
+            <input type="password" id="admin_pwd_input" placeholder="비밀번호 입력" class="w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50 mb-2 focus:border-gray-900 focus:outline-none text-[16px] font-medium text-center tracking-widest" onkeyup="if(event.key==='Enter') window.verifyAdmin()">
+            <p id="admin_pwd_error" class="text-[13px] font-bold text-red-500 mb-6 hidden">비밀번호가 일치하지 않습니다.</p>
+            <div class="flex gap-3 mt-4">
+                <button onclick="window.closeAuthModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold text-[16px] py-4 rounded-[16px] hover:bg-gray-200 transition-colors">취소</button>
+                <button onclick="window.verifyAdmin()" class="flex-1 bg-gray-900 text-white font-bold text-[16px] py-4 rounded-[16px] hover:bg-gray-800 transition-colors shadow-md">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard Modal -->
+    <div id="admin_modal" class="hidden fixed inset-0 z-50 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4 md:p-10">
+        <div class="bg-[#f5f5f5] rounded-[32px] w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-gray-200">
+            <div class="px-8 py-6 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
+                <div>
+                    <h2 class="text-[22px] font-black text-gray-900 tracking-tight">결제 내역 관리</h2>
+                    <p class="text-[14px] text-gray-500 font-medium mt-1">접수된 결제 내역을 실시간으로 확인합니다.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="window.exportAdminToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[14px] font-bold py-3 px-5 rounded-[16px] transition-colors shadow-md flex items-center">
+                        <i class="fas fa-file-excel mr-2"></i> 엑셀 다운로드
+                    </button>
+                    <button onclick="window.closeAdmin()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"><i class="fas fa-times text-[18px]"></i></button>
+                </div>
+            </div>
+            <div class="p-6 md:p-8 overflow-y-auto flex-grow" id="admin_list">
+                <div class="text-center py-20 text-gray-400 font-bold text-[16px]">데이터를 불러오는 중입니다...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3FzXtaRmE78_mSi6-fiOejHaTa_7GBm4",
+            authDomain: "event-1ef59.firebaseapp.com",
+            projectId: "event-1ef59",
+            storageBucket: "event-1ef59.firebasestorage.app",
+            messagingSenderId: "798866042476",
+            appId: "1:798866042476:web:980d7f2638ab7ec9e77249",
+            measurementId: "G-XS4J5GGL87"
+        };
+
+        let db;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+        } catch (error) {
+            console.error("Firebase 초기화 에러:", error);
+        }
+
+        window.showAlert = function(title, message, type = 'error') {
+            const modal = document.getElementById('custom_alert_modal');
+            const icon = document.getElementById('alert_icon');
+            document.getElementById('alert_title').innerText = title;
+            document.getElementById('alert_message').innerText = message;
+            
+            if(type === 'success') {
+                icon.innerHTML = '<div class="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mx-auto"><i class="fas fa-check text-[36px] text-brand"></i></div>';
+            } else if(type === 'info') {
+                icon.innerHTML = '<div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto"><i class="fas fa-info text-[36px] text-blue-500"></i></div>';
+            } else {
+                icon.innerHTML = '<div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto"><i class="fas fa-exclamation text-[36px] text-red-500"></i></div>';
+            }
+            modal.classList.remove('hidden');
+        };
+
+        window.formatPhoneNumber = function(input) {
+            let val = input.value.replace(/[^0-9]/g, ''); // 숫자만 남기기
+            if (val.length > 3 && val.length <= 7) {
+                input.value = val.substr(0, 3) + '-' + val.substr(3);
+            } else if (val.length > 7) {
+                input.value = val.substr(0, 3) + '-' + val.substr(3, 4) + '-' + val.substr(7, 4);
+            } else {
+                input.value = val;
+            }
+        };
+
+        const dateOptions = {
+            '09-26': { fullDateStr: '2026-09-26', displayDate: '9월 26일 (토)', title: '추석 맞이 비누방울쇼' },
+            '10-31': { fullDateStr: '2026-10-31', displayDate: '10월 31일 (토)', title: '할로윈 특별 매직쇼' },
+            '11-28': { fullDateStr: '2026-11-28', displayDate: '11월 28일 (토)', title: '가을 감성 음악회' },
+            '12-26': { fullDateStr: '2026-12-26', displayDate: '12월 26일 (토)', title: '크리스마스 매직쇼' }
+        };
+
+        let selectedKey = '09-26';
+        const VAT_COST = 1650000; // 1,500,000 + 150,000
+        const MAX_QMONEY = 50000;
+        let usedQMoney = 0;
+        let adminCachedData = [];
+        let pendingDeleteDocId = null;
+
+        window.selectDate = function(key) {
+            if (!dateOptions[key]) return;
+            selectedKey = key;
+            
+            document.querySelectorAll('.interactive-card').forEach(card => card.classList.remove('active'));
+            const activeCard = document.getElementById(`card_${key}`);
+            if (activeCard) activeCard.classList.add('active');
+
+            const item = dateOptions[key];
+            document.getElementById('selected_summary_text').innerText = `${item.displayDate} (${item.title})`;
+        };
+
+        window.handleQMoneyInput = function() {
+            const inputEl = document.getElementById('qmoney_input');
+            let val = parseInt(inputEl.value);
+            if (isNaN(val)) val = 0;
+            
+            if (val > MAX_QMONEY) {
+                val = MAX_QMONEY;
+                inputEl.value = MAX_QMONEY;
+            }
+            
+            usedQMoney = Math.floor(val / 100) * 100;
+            window.updatePriceDisplay();
+        };
+
+        window.handleQMoneyBlur = function() {
+            const inputEl = document.getElementById('qmoney_input');
+            let val = parseInt(inputEl.value);
+            if (isNaN(val)) val = 0;
+            
+            val = Math.min(MAX_QMONEY, val);
+            val = Math.floor(val / 100) * 100;
+            inputEl.value = val === 0 ? '' : val;
+            usedQMoney = val;
+            window.updatePriceDisplay();
+        };
+
+        window.useAllQMoney = function() {
+            document.getElementById('qmoney_input').value = MAX_QMONEY;
+            usedQMoney = MAX_QMONEY;
+            window.updatePriceDisplay();
+        };
+
+        window.updatePriceDisplay = function() {
+            const finalPrice = VAT_COST - usedQMoney;
+            document.getElementById('total_price_display').innerText = finalPrice.toLocaleString();
+            document.getElementById('pay_button_text').innerText = `${finalPrice.toLocaleString()}원 결제하기`;
+
+            const discountRow = document.getElementById('qmoney_discount_row');
+            if (usedQMoney > 0) {
+                document.getElementById('qmoney_discount_text').innerText = `- ${usedQMoney.toLocaleString()}원`;
+                discountRow.classList.remove('hidden');
+            } else {
+                discountRow.classList.add('hidden');
+            }
+        };
+
+        function validateForm() {
+            const campName = document.getElementById('camp_name').value.trim();
+            const phone = document.getElementById('phone_number').value.trim();
+
+            if (!campName) { 
+                document.getElementById('camp_name').focus(); 
+                window.showAlert('입력 확인', '캠핑장명을 입력해 주세요.'); 
+                return false; 
+            }
+            if (!phone) { 
+                document.getElementById('phone_number').focus(); 
+                window.showAlert('입력 확인', '담당자 연락처를 입력해 주세요.'); 
+                return false; 
+            }
+            if (phone.length < 12) {
+                document.getElementById('phone_number').focus(); 
+                window.showAlert('입력 오류', '올바른 연락처 번호를 끝까지 입력해 주세요.'); 
+                return false; 
+            }
+            
+            return { campName, phone };
+        }
+
+        window.processPayment = async function() {
+            const formData = validateForm();
+            if (!formData) return;
+
+            const selectedData = dateOptions[selectedKey];
+            const paymentMethodVal = document.querySelector('input[name="payment_method"]:checked').value;
+            const paymentMethodText = paymentMethodVal === 'credit_card' ? '신용카드' : '가상계좌';
+            const finalPrice = VAT_COST - usedQMoney;
+
+            try {
+                if (db && firebaseConfig.apiKey !== "API_KEY_입력") {
+                    await addDoc(collection(db, "consultations"), {
+                        eventDate: selectedData.fullDateStr,
+                        monthTitle: selectedData.title,
+                        campName: formData.campName,
+                        phone: formData.phone,
+                        status: "결제완료", 
+                        totalPrice: VAT_COST,
+                        usedQMoney: usedQMoney,
+                        finalPrice: finalPrice,
+                        paymentMethod: paymentMethodText,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+
+                window.showAlert(
+                    '결제 완료', 
+                    `[${paymentMethodText}] 결제가 정상적으로 승인되었습니다.\n\n일정: ${selectedData.displayDate}\n행사: ${selectedData.title}\n캠핑장명: ${formData.campName}\n결제금액: ${finalPrice.toLocaleString()}원\n\n확인 후 담당 플래너가 곧 안내 전화를 드리겠습니다.`, 
+                    'success'
+                );
+
+                document.getElementById('camp_name').value = '';
+                document.getElementById('phone_number').value = '';
+                document.getElementById('qmoney_input').value = '';
+                usedQMoney = 0;
+                window.updatePriceDisplay();
+
+            } catch (error) {
+                console.error("Payment error:", error);
+                window.showAlert('결제 오류', '결제 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+            }
+        };
+
+        window.checkAdmin = function() {
+            document.getElementById('admin_pwd_input').value = '';
+            document.getElementById('admin_pwd_error').classList.add('hidden');
+            document.getElementById('admin_auth_modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('admin_pwd_input').focus(), 100);
+        };
+
+        window.closeAuthModal = function() { document.getElementById('admin_auth_modal').classList.add('hidden'); };
+        window.closeAdmin = function() { document.getElementById('admin_modal').classList.add('hidden'); };
+
+        window.verifyAdmin = function() {
+            if (document.getElementById('admin_pwd_input').value === "Net0521") {
+                document.getElementById('admin_auth_modal').classList.add('hidden');
+                document.getElementById('admin_modal').classList.remove('hidden');
+                loadAdminData();
+            } else {
+                document.getElementById('admin_pwd_error').classList.remove('hidden');
+            }
+        };
+
+        async function loadAdminData() {
+            const listContainer = document.getElementById('admin_list');
+            if(!db || firebaseConfig.apiKey === "API_KEY_입력") return;
+
+            try {
+                listContainer.innerHTML = '<div class="text-center py-20 text-gray-400 font-bold text-[16px]"><i class="fas fa-spinner fa-spin mr-2"></i>데이터를 불러오는 중입니다...</div>';
+                const q = query(collection(db, "consultations"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                adminCachedData = [];
+
+                if (querySnapshot.empty) {
+                    listContainer.innerHTML = '<div class="text-center py-20 text-gray-400 font-bold text-[16px] bg-white rounded-3xl border border-gray-200">예약된 내역이 없습니다.</div>';
+                    return;
+                }
+
+                let html = '<div class="space-y-4">';
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const docId = docSnap.id;
+                    const submitDate = new Date(data.createdAt).toLocaleString('ko-KR');
+                    const status = data.status || "결제완료";
+                    const fPrice = data.finalPrice ? data.finalPrice.toLocaleString()+'원' : '-';
+                    const payMethod = data.paymentMethod ? data.paymentMethod : '-';
+                    const qMoney = data.usedQMoney ? data.usedQMoney.toLocaleString()+'P' : '0P';
+
+                    adminCachedData.push({
+                        "결제일시": submitDate,
+                        "캠핑장명": data.campName || '',
+                        "연락처": data.phone || '',
+                        "행사일": data.eventDate || '',
+                        "분류": data.monthTitle || '',
+                        "상태": status,
+                        "결제금액": data.finalPrice || 0,
+                        "포인트사용": qMoney,
+                        "수단": payMethod
+                    });
+                    
+                    let statusColor = "bg-gray-100 text-gray-700";
+                    if(status === '행사완료') statusColor = "bg-brand/10 text-brand border-brand/20";
+                    if(status === '취소') statusColor = "bg-red-50 text-red-600 border-red-200";
+                    
+                    html += `
+                        <div class="bg-white p-6 md:p-8 rounded-[24px] border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-gray-300">
+                            <div>
+                                <div class="text-[13px] font-bold text-gray-400 mb-2">${submitDate}</div>
+                                <h4 class="text-[20px] font-black text-gray-900 mb-2">${data.campName}</h4>
+                                <div class="text-gray-600 text-[15px] font-medium leading-relaxed">
+                                    <span class="inline-block mr-3"><i class="far fa-calendar-check text-gray-400 mr-1.5"></i> ${data.eventDate} (${data.monthTitle || ''})</span>
+                                    <span class="inline-block"><i class="fas fa-phone-alt text-gray-400 mr-1.5"></i> ${data.phone}</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3 self-start md:self-center bg-gray-50 p-4 rounded-[16px] md:bg-transparent md:p-0">
+                                <div class="text-left md:text-right mr-4">
+                                    <span class="block text-[12px] font-bold text-gray-400 mb-1">${payMethod} 결제</span>
+                                    <span class="font-black text-gray-900 text-[18px]">${fPrice}</span>
+                                </div>
+                                <select onchange="window.updateStatus('${docId}', this.value)" class="text-[14px] font-bold border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-gray-900 cursor-pointer ${statusColor}">
+                                    <option value="결제완료" ${status === '결제완료' ? 'selected' : ''}>결제완료</option>
+                                    <option value="행사완료" ${status === '행사완료' ? 'selected' : ''}>행사완료</option>
+                                    <option value="취소" ${status === '취소' ? 'selected' : ''}>취소</option>
+                                </select>
+                                <button onclick="window.deleteConsultation('${docId}')" class="w-11 h-11 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="삭제">
+                                    <i class="fas fa-trash-alt text-[16px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                listContainer.innerHTML = html;
+            } catch (error) {
+                console.error("데이터 로드 실패:", error);
+            }
+        }
+
+        window.updateStatus = async function(docId, newStatus) {
+            if(!db) return;
+            try {
+                const docRef = doc(db, "consultations", docId);
+                await updateDoc(docRef, { status: newStatus });
+                loadAdminData(); 
+            } catch (error) {
+                window.showAlert('오류', '상태 변경 중 오류가 발생했습니다.');
+            }
+        };
+
+        window.deleteConsultation = function(docId) {
+            pendingDeleteDocId = docId;
+            document.getElementById('custom_confirm_modal').classList.remove('hidden');
+        };
+
+        window.executeDelete = async function() {
+            document.getElementById('custom_confirm_modal').classList.add('hidden');
+            if(!pendingDeleteDocId || !db) return;
+            try {
+                const docRef = doc(db, "consultations", pendingDeleteDocId);
+                await deleteDoc(docRef);
+                pendingDeleteDocId = null;
+                loadAdminData();
+            } catch (error) {
+                window.showAlert('오류', '삭제 중 오류가 발생했습니다.');
+            }
+        };
+
+        window.exportAdminToExcel = function() {
+            if (!adminCachedData || adminCachedData.length === 0) {
+                return window.showAlert('알림', '다운로드할 결제 내역이 없습니다.', 'info');
+            }
+            try {
+                const worksheet = XLSX.utils.json_to_sheet(adminCachedData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "결제내역");
+                XLSX.writeFile(workbook, `이벤트결제내역_${new Date().toISOString().slice(0,10)}.xlsx`);
+            } catch (error) {
+                console.error("엑셀 추출 실패:", error);
+                window.showAlert('오류', '엑셀 파일 생성 중 오류가 발생했습니다.');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Default select 9월 26일
+            window.selectDate('09-26');
+        });
+    </script>
+</body>
+</html>
